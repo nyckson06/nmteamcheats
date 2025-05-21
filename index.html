@@ -129,7 +129,8 @@
             <img src="${produto.imagem}" alt="${produto.nome}">
             <h2>${produto.nome}</h2>
             <p>R$ ${produto.preco}</p>
-            <button class="buy-btn" onclick="comprar('${produto.nome}')">Comprar</button>
+            <p><strong>Vendedor:</strong> ${produto.autor || "Desconhecido"}</p>
+            <button class="buy-btn" onclick="comprar('${produto.whatsapp}', '${produto.nome}')">Comprar</button>
             <div class="comentarios" id="comentarios-${id}"></div>
             <textarea id="comentario-${id}" placeholder="Escreva um comentário..."></textarea>
             <button onclick="comentar('${id}')">Comentar</button>
@@ -197,22 +198,30 @@
       const nome = prompt("Nome do produto:");
       const preco = prompt("Preço:");
       const imagem = prompt("URL da imagem:");
+      const whatsapp = prompt("Link do WhatsApp (ex: https://wa.me/55...)");
 
-      if (!nome || !preco || !imagem) return alert("Todos os campos são obrigatórios.");
+      if (!nome || !preco || !imagem || !whatsapp) return alert("Todos os campos são obrigatórios.");
+
+      const userSnap = await get(ref(db, 'users/' + currentUser.uid));
+      const userData = userSnap.val();
+      const autor = userData.nome || userData.email;
 
       const novoId = Date.now();
       await set(ref(db, 'produtos/' + novoId), {
         nome,
         preco,
-        imagem
+        imagem,
+        whatsapp,
+        autor
       });
 
       alert("Produto adicionado!");
     };
 
-    window.comprar = (produto) => {
+    window.comprar = (whatsappLink, produto) => {
+      if (!whatsappLink) return alert("Este produto não possui link do WhatsApp.");
       const mensagem = `Olá! Tenho interesse em comprar o ${produto}.`;
-      const url = `https://wa.me/5584999395246?text=${encodeURIComponent(mensagem)}`;
+      const url = `${whatsappLink}?text=${encodeURIComponent(mensagem)}`;
       window.open(url, '_blank');
     };
   </script>
@@ -271,4 +280,4 @@
     <button onclick="() => { document.getElementById('perfil').style.display='none'; document.getElementById('shop').style.display='block'; }">Voltar</button>
   </div>
 </body>
-      </html>
+  </html>
