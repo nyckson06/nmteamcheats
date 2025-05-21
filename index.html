@@ -28,12 +28,13 @@
     window.register = async () => {
       const email = document.getElementById("registerEmail").value;
       const password = document.getElementById("registerPassword").value;
-      if (!email || !password) return alert("Preencha todos os campos.");
+      const username = document.getElementById("registerUsername").value;
+      if (!email || !password || !username) return alert("Preencha todos os campos.");
 
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        await set(ref(db, 'users/' + user.uid), { email, cargo: "usuário", banido: false });
+        await set(ref(db, 'users/' + user.uid), { email, nome: username, cargo: "usuário", banido: false });
         alert("Cadastro realizado com sucesso!");
         showLogin();
       } catch (error) {
@@ -42,9 +43,21 @@
     };
 
     window.login = async () => {
-      const email = document.getElementById("loginEmail").value;
+      const emailOrUsername = document.getElementById("loginEmail").value;
       const password = document.getElementById("loginPassword").value;
+
       try {
+        let email = emailOrUsername;
+        if (!emailOrUsername.includes("@")) {
+          const snapshot = await get(ref(db, 'users'));
+          snapshot.forEach(child => {
+            const val = child.val();
+            if (val.nome === emailOrUsername) {
+              email = val.email;
+            }
+          });
+        }
+
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         currentUser = userCredential.user;
         const userSnap = await get(ref(db, 'users/' + currentUser.uid));
@@ -225,13 +238,14 @@
   <div id="auth" class="auth-container">
     <div class="auth-box" id="loginBox">
       <h2>Login</h2>
-      <input type="email" id="loginEmail" placeholder="Email" required>
+      <input type="text" id="loginEmail" placeholder="Email ou Nome de usuário" required>
       <input type="password" id="loginPassword" placeholder="Senha" required>
       <button onclick="login()">Entrar</button>
       <a onclick="showRegister()">Não tem conta? Cadastre-se</a>
     </div>
     <div class="auth-box" id="registerBox" style="display:none;">
       <h2>Cadastro</h2>
+      <input type="text" id="registerUsername" placeholder="Nome de usuário" required>
       <input type="email" id="registerEmail" placeholder="Email" required>
       <input type="password" id="registerPassword" placeholder="Senha" required>
       <button onclick="register()">Cadastrar</button>
